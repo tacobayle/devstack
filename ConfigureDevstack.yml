@@ -1,0 +1,210 @@
+- name : configure openstack network
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+
+  vars_files:
+    - "vars/params.yml"
+
+  vars:
+    OpenStackEnvProvider:
+      OS_AUTH_URL: http://{{ devstack.ip }}/identity
+      OS_PASSWORD: "{{ devstack.password }}"
+      OS_AUTH_TYPE: password
+      OS_IDENTITY_API_VERSION: 3
+      OS_PROJECT_DOMAIN_ID: default
+      OS_USER_DOMAIN_ID: default
+      OS_PROJECT_NAME: "{{ openstack.projectProvider }}"
+      OS_USERNAME: "{{ openstack.username }}"
+      OS_TENANT_NAME:  "{{ openstack.projectProvider }}"
+
+    OpenStackEnvTenant:
+      OS_AUTH_URL: http://{{ devstack.ip }}/identity
+      OS_PASSWORD: "{{ devstack.password }}"
+      OS_AUTH_TYPE: password
+      OS_IDENTITY_API_VERSION: 3
+      OS_PROJECT_DOMAIN_ID: default
+      OS_USER_DOMAIN_ID: default
+      OS_PROJECT_NAME: "{{ openstack.projectTenant }}"
+      OS_USERNAME: "{{ openstack.username }}"
+      OS_TENANT_NAME:  "{{ openstack.projectTenant }}"
+
+  tasks:
+
+    - name: Create OpenStack Networks for provider project
+      os_network:
+        state: present
+        name: "{{ item.name }}"
+        external: false
+        shared: false
+      environment: "{{ OpenStackEnvProvider }}"
+      loop: "{{ openstack.networksProvider }}"
+
+    - name: Create OpenStack Subnets for provider project
+      os_subnet:
+        state: present
+        network_name: "{{ item.name }}"
+        name: "{{ item.subnet }}"
+        cidr: "{{ item.cidr }}"
+      environment: "{{ OpenStackEnvProvider }}"
+      loop: "{{ openstack.networksProvider }}"
+
+    - name: Create an OpenStack router for provider project
+      os_router:
+        state: present
+        name: "router-{{ item.name }}"
+        network: public
+        interfaces:
+          - net: "{{ item.name }}"
+            subnet: "{{ item.subnet }}"
+      environment: "{{ OpenStackEnvProvider }}"
+      loop: "{{ openstack.networksProvider }}"
+
+    - name: Create OpenStack Networks for Tenant project
+      os_network:
+        state: present
+        name: "{{ item.name }}"
+        external: false
+        shared: false
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.networksTenant }}"
+
+    - name: Create OpenStack Subnets for Tenant project
+      os_subnet:
+        state: present
+        network_name: "{{ item.name }}"
+        name: "{{ item.subnet }}"
+        cidr: "{{ item.cidr }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.networksTenant }}"
+
+    - name: Create an OpenStack router for Tenant project
+      os_router:
+        state: present
+        name: "router-{{ item.name }}"
+        network: public
+        interfaces:
+          - net: "{{ item.name }}"
+            subnet: "{{ item.subnet }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.networksTenant }}"
+
+
+    - name: Create New security Group
+      os_security_group:
+        state: present
+        name: sg-allow-all
+        description: security group Allow All
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Adding ICMP rule Ingress
+      os_security_group_rule:
+        direction: ingress
+        security_group: sg-allow-all
+        protocol: icmp
+        port_range_min: -1
+        port_range_max: -1
+        remote_ip_prefix: 0.0.0.0/0
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Adding TCP/UDP rule Ingress
+      os_security_group_rule:
+        direction: ingress
+        security_group: sg-allow-all
+        protocol: "{{ item }}"
+        port_range_min: 1
+        port_range_max: 65535
+        remote_ip_prefix: 0.0.0.0/0
+      environment: "{{ OpenStackEnvTenant }}"
+      loop:
+        - tcp
+        - udp
+
+    - name: Gather facts about a previously created image named image1
+      os_image_facts:
+        image: "{{ openstack.vm.defaultImage }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Gather facts about previously created networks
+      os_networks_facts:
+        name: "{{ openstack.networksTenant.1.name }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - os_flavor_facts:
+        name: "{{ openstack.vm.defaultFlavor }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
+
+    - name: Create a new instance for servers
+      os_server:
+        state: present
+        name: "{{ item.name }}"
+        image: "{{ openstack_image.id }}"
+        timeout: 30
+#        auto_ip: yes
+        floating_ip_pools: "{{ openstack.externalNetwork }}"
+        security_groups: sg-allow-all
+        flavor: "{{ openstack_flavors.0.id }}"
+        nics:
+          - net-id: "{{ openstack_networks.0.id }}"
+        meta:
+          hostname: "{{ item.name }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.vm.servers }}"
+
+    - name: Assign floating IP to web servers
+      os_floating_ip:
+        server: "{{ item.name }}"
+        wait: yes
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.vm.servers }}"
+
+    - name: Gather facts about previously created networks
+      os_networks_facts:
+        name: "{{ openstack.networksTenant.0.name }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Create a new instance for client
+      os_server:
+        state: present
+        name: "{{ item.name }}"
+        image: "{{ openstack_image.id }}"
+        timeout: 30
+#        auto_ip: yes
+        floating_ip_pools: "{{ openstack.externalNetwork }}"
+        security_groups: sg-allow-all
+        flavor: "{{ openstack_flavors.0.id }}"
+        nics:
+          - net-id: "{{ openstack_networks.0.id }}"
+        meta:
+          hostname: "{{ item.name }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.vm.clients }}"
+
+    - name: Retrieve Floating IP for servers
+      os_server_facts:
+        server: server*
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Display Floating IP
+      debug:
+        msg: Server "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+       label: "{{ item.name }}"
+
+
+    - name: Retrieve Floating IP for clients
+      os_server_facts:
+        server: client*
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Display Floating IP
+      debug:
+        msg: Client "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+       label: "{{ item.name }}"

@@ -5,13 +5,13 @@ PackageList:
 devstack:
   user: stack
   version: pike
-  ip: 172.16.1.5
+  ip: 192.168.17.160
   password: avi123
-  net: 11.1.1.0/24
-  gw: 11.1.1.1
-  if: eth1
-  dhcpStart: 11.1.1.10
-  dhcpEnd: 11.1.1.110
+  net: 192.168.17.0/24
+  gw: 192.168.17.2
+  if: ens32
+  dhcpStart: 192.168.17.100
+  dhcpEnd: 192.168.17.200
   privateNet: 10.0.0.0/22
   templateFile: local.conf.j2
 
