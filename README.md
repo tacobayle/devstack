@@ -4,7 +4,7 @@ Goals:
 - Configure OpenStack with networks, subnets, security groups, ...
 - Spin up a couple of VMs
 
-Use the following command start:
+Use the following command:
 - ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook ConfigureDevstack.yml
 
 All the variables are stored in var/params.yml
