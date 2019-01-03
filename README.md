@@ -1,9 +1,11 @@
 # devstack
 Goals:
-- Install a new devstack in a single host
+- Install devstack in a single host
+- Configure OpenStack with networks, subnets, security groups, ...
+- Spin up a couple of VMs
 
-Use the following command  to create the infratructure:
-- ansible-playbook -i hostAzurePrivate installDevstack.yml
+Use the following command start:
+- ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook ConfigureDevstack.yml
 
 All the variables are stored in var/params.yml
 
@@ -11,4 +13,4 @@ Prerequisites:
 
 Script has been tested against:
 - Ansible 2.7.0
-- Ubuntu 16.04.05 LTS
+- Ubuntu 16.04.05 LTS (locally Vmware and in Azure)
