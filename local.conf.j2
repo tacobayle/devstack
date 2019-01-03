@@ -1,0 +1,26 @@
+[[local|localrc]]
+HOST_IP={{ devstack.ip }}
+SERVICE_HOST={{ devstack.ip }}
+MYSQL_HOST={{ devstack.ip }}
+RABBIT_HOST={{ devstack.ip }}
+GLANCE_HOSTPORT={{ devstack.ip }}:9292
+ADMIN_PASSWORD={{ devstack.password }}
+DATABASE_PASSWORD={{ devstack.password }}
+RABBIT_PASSWORD={{ devstack.password }}
+SERVICE_PASSWORD={{ devstack.password }}
+
+ENABLE_UBUNTU_CLOUD_ARCHIVE=False
+
+## Neutron options
+Q_USE_SECGROUP=True
+FLOATING_RANGE="{{ devstack.net }}"
+IPV4_ADDRS_SAFE_TO_USE="{{ devstack.privateNet }}"
+Q_FLOATING_ALLOCATION_POOL=start={{ devstack.dhcpStart }},end={{ devstack.dhcpEnd }}
+PUBLIC_NETWORK_GATEWAY="{{ devstack.gw }}"
+PUBLIC_INTERFACE={{ devstack.if }}
+
+# Open vSwitch provider networking configuration
+Q_USE_PROVIDERNET_FOR_PUBLIC=True
+OVS_PHYSICAL_BRIDGE=br-ex
+PUBLIC_BRIDGE=br-ex
+OVS_BRIDGE_MAPPINGS=public:br-ex

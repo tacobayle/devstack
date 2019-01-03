@@ -1,0 +1,16 @@
+PackageList:
+  - libvirt-bin
+  - git
+
+devstack:
+  user: stack
+  version: pike
+  ip: 172.16.1.5
+  password: avi123
+  net: 172.16.1.0/24
+  gw: 172.16.1.1
+  if: eth1
+  dhcpStart: 11.1.1.10
+  dhcpEnd: 11.1.1.110
+  privateNet: 10.0.0.0/22
+  templateFile: local.conf.j2
