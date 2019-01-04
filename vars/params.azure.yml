@@ -1,0 +1,41 @@
+PackageList:
+  - libvirt-bin
+  - git
+
+devstack:
+  user: stack
+  version: pike
+  ip: 172.16.1.5
+  password: avi123
+  net: 11.1.1.0/24
+  gw: 11.1.1.1
+  if: eth1
+  dhcpStart: 11.1.1.10
+  dhcpEnd: 11.1.1.110
+  privateNet: 10.0.0.0/22
+  templateFile: local.conf.j2
+
+openstack:
+  username: admin
+  projectProvider: admin
+  projectTenant: demo
+  externalNetwork: public
+  networksProvider:
+    - name: net-avi
+      subnet: subnet-avi
+      cidr: 192.168.1.0/24
+  networksTenant:
+    - name: net-client
+      subnet: subnet-client
+      cidr: 2.1.1.0/24
+    - name: net-server
+      subnet: subnet-server
+      cidr: 3.1.1.0/24
+  vm:
+    defaultImage: cirros-0.3.5-x86_64-disk
+    defaultFlavor: cirros256
+    servers:
+      - name: server1
+      - name: server2
+    clients:
+      - name: client1
