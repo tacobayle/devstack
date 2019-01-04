@@ -153,12 +153,12 @@
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.vm.servers }}"
 
-    - name: Assign floating IP to web servers
-      os_floating_ip:
-        server: "{{ item.name }}"
-        wait: yes
-      environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack.vm.servers }}"
+    # - name: Assign floating IP to web servers
+    #   os_floating_ip:
+    #     server: "{{ item.name }}"
+    #     wait: yes
+    #   environment: "{{ OpenStackEnvTenant }}"
+    #   loop: "{{ openstack.vm.servers }}"
 
     - name: Gather facts about previously created networks
       os_networks_facts:
