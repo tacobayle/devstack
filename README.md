@@ -5,7 +5,7 @@ Goals:
 - Spin up a couple of VMs
 
 Use the following command:
-- ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook ConfigureDevstack.yml
+- ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook configureDevstack.yml
 
 All the variables are stored in var/params.yml
 
