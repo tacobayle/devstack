@@ -90,6 +90,16 @@
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.networksTenant }}"
 
+    - name: Uploading a glance image
+      os_image:
+        name: "{{ item.name }}"
+        container_format: bare
+        disk_format: qcow2
+        state: present
+        filename: "{{ item.fileName }}"
+      environment: "{{ OpenStackEnvProvider }}"
+      loop: "{{ openstack.glance }}"
+
 
     - name: Create New security Group
       os_security_group:
@@ -135,7 +145,6 @@
         name: "{{ openstack.vm.defaultFlavor }}"
       environment: "{{ OpenStackEnvTenant }}"
 
-
     - name: Create a new instance for servers
       os_server:
         state: present
@@ -146,19 +155,13 @@
         floating_ip_pools: "{{ openstack.externalNetwork }}"
         security_groups: sg-allow-all
         flavor: "{{ openstack_flavors.0.id }}"
+        userdata: "{{ openstack.vm.defaultServerUserData }}"
         nics:
           - net-id: "{{ openstack_networks.0.id }}"
         meta:
           hostname: "{{ item.name }}"
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.vm.servers }}"
-
-    # - name: Assign floating IP to web servers
-    #   os_floating_ip:
-    #     server: "{{ item.name }}"
-    #     wait: yes
-    #   environment: "{{ OpenStackEnvTenant }}"
-    #   loop: "{{ openstack.vm.servers }}"
 
     - name: Gather facts about previously created networks
       os_networks_facts:

@@ -5,13 +5,13 @@ PackageList:
 devstack:
   user: stack
   version: pike
-  ip: 172.16.1.5
+  ip: 192.168.17.160
   password: avi123
-  net: 11.1.1.0/24
-  gw: 11.1.1.1
-  if: eth1
-  dhcpStart: 11.1.1.10
-  dhcpEnd: 11.1.1.110
+  net: 192.168.17.0/24
+  gw: 192.168.17.2
+  if: ens32
+  dhcpStart: 192.168.17.100
+  dhcpEnd: 192.168.17.120
   privateNet: 10.0.0.0/22
   templateFile: local.conf.j2
 
@@ -31,9 +31,19 @@ openstack:
     - name: net-server
       subnet: subnet-server
       cidr: 3.1.1.0/24
+  glance:
+    - name: Ubuntu-Xenial-Server
+      fileName: /home/avi/bin/ubuntu/xenial-server-cloudimg-i386-disk1.img
+
   vm:
-    defaultImage: cirros-0.3.5-x86_64-disk
-    defaultFlavor: cirros256
+    # defaultImage: cirros-0.3.5-x86_64-disk
+    # defaultFlavor: cirros256
+    defaultImage: Ubuntu-Xenial-Server
+    defaultFlavor: ds1G
+    defaultServerUserData: |
+      #!/bin/bash
+      MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
+      while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP" | sudo nc -l -p 80 ; done&
     servers:
       - name: server1
       - name: server2
