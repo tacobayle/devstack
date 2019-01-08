@@ -217,6 +217,25 @@
         server: server*
       environment: "{{ OpenStackEnvTenant }}"
 
+    - name: Initialize a list for server IPs
+      set_fact:
+        serverIpList: []
+
+    - name: Append Private IPs for each servers on a list
+      set_fact:
+        serverIpList: "{{ serverIpList }} + [ '{{ item.private_v4 }}' ]"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create a yaml file with server IP
+      template:
+        src: "{{ vmServer.templateFile }}"
+        dest: "{{ item }}"
+      delegate_to: 127.0.0.1
+      ignore_errors: yes
+      loop: "{{ vmServer.output }}"
+
     - name: Display Floating IP
       debug:
         msg: Server "{{ item.name }}" is reachable at "{{ item.public_v4 }}"

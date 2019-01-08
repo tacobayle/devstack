@@ -1,0 +1,7 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+---
+servers:
+  {% for ip in serverIpList %}
+  - ipaddr: {{ ip }}
+    iptype: 'V4'
+  {% endfor %}

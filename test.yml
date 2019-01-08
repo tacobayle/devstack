@@ -1,0 +1,63 @@
+- name : configure openstack
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+
+  vars_files:
+    - "vars/params.yml"
+
+  vars:
+    OpenStackEnvProvider:
+      OS_AUTH_URL: http://{{ devstack.ip }}/identity
+      OS_PASSWORD: "{{ devstack.password }}"
+      OS_AUTH_TYPE: password
+      OS_IDENTITY_API_VERSION: 3
+      OS_PROJECT_DOMAIN_ID: default
+      OS_USER_DOMAIN_ID: default
+      OS_PROJECT_NAME: "{{ openstack.projectProvider }}"
+      OS_USERNAME: "{{ openstack.username }}"
+      OS_TENANT_NAME:  "{{ openstack.projectProvider }}"
+
+    OpenStackEnvTenant:
+      OS_AUTH_URL: http://{{ devstack.ip }}/identity
+      OS_PASSWORD: "{{ devstack.password }}"
+      OS_AUTH_TYPE: password
+      OS_IDENTITY_API_VERSION: 3
+      OS_PROJECT_DOMAIN_ID: default
+      OS_USER_DOMAIN_ID: default
+      OS_PROJECT_NAME: "{{ openstack.projectTenant }}"
+      OS_USERNAME: "{{ openstack.username }}"
+      OS_TENANT_NAME:  "{{ openstack.projectTenant }}"
+
+  tasks:
+
+    - name: Initialize a list for server IPs
+      set_fact:
+        serverIpList: []
+
+    - name: Retrieve Floating IP for servers
+      os_server_facts:
+        server: server*
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Append Private IPs for each servers on a list
+      set_fact:
+        serverIpList: "{{ serverIpList }} + [ '{{ item.private_v4 }}' ]"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create a yaml file with server IP
+      template:
+        src: "{{ vmServer.templateFile }}"
+        dest: "{{ item }}"
+      delegate_to: 127.0.0.1
+      ignore_errors: yes
+      loop: "{{ vmServer.output }}"
+
+    # - debug: var=item.private_v4
+    #   loop: "{{ openstack_servers }}"
+    #   loop_control:
+    #     label: "{{ item.name }}"
+    #   ignore_errors: yes

@@ -73,3 +73,8 @@ openstack:
       - name: server2
     clients:
       - name: client1
+
+vmServer:
+  templateFile: server.j2
+  output:
+    - /home/avi/aviVs/vars/server.yml
