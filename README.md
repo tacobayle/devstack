@@ -8,6 +8,7 @@ Goals:
 - Configure Ssh key
 - Create VM servers category
 - Create VM clients category
+- output a file inventory with server IPs
 
 Use the following command:
 - ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook configureDevstack.yml
