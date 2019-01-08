@@ -34,16 +34,40 @@ openstack:
   glance:
     - name: Ubuntu-Xenial-Server
       fileName: /home/avi/bin/ubuntu/xenial-server-cloudimg-i386-disk1.img
+  key:
+    - name: keyPairs1
+      public_key_file: /home/avi/.ssh/id_rsa.azure.pub
+  securityGroups:
+    - name: sg-allow-all
+      description: 'security group Allow All'
+      rules:
+        - direction: ingress
+          protocol: icmp
+          port_range_min: -1
+          port_range_max: -1
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          protocol: tcp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
+        - direction: ingress
+          protocol: udp
+          port_range_min: 1
+          port_range_max: 65535
+          remote_ip_prefix: 0.0.0.0/0
 
   vm:
     # defaultImage: cirros-0.3.5-x86_64-disk
     # defaultFlavor: cirros256
+    defaultSecurityGroups: sg-allow-all
     defaultImage: Ubuntu-Xenial-Server
     defaultFlavor: ds1G
+    defaultKey: keyPairs1
     defaultServerUserData: |
       #!/bin/bash
       MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
-      while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP" | sudo nc -l -p 80 ; done&
+      while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP!" | sudo nc -l -p 80 ; done&
     servers:
       - name: server1
       - name: server2

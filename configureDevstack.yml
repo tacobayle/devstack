@@ -1,4 +1,4 @@
-- name : configure openstack network
+- name : configure openstack
   hosts: localhost
   connection: local
   gather_facts: no
@@ -40,6 +40,8 @@
         shared: false
       environment: "{{ OpenStackEnvProvider }}"
       loop: "{{ openstack.networksProvider }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Create OpenStack Subnets for provider project
       os_subnet:
@@ -49,6 +51,8 @@
         cidr: "{{ item.cidr }}"
       environment: "{{ OpenStackEnvProvider }}"
       loop: "{{ openstack.networksProvider }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Create an OpenStack router for provider project
       os_router:
@@ -99,37 +103,57 @@
         filename: "{{ item.fileName }}"
       environment: "{{ OpenStackEnvProvider }}"
       loop: "{{ openstack.glance }}"
-
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Create New security Group
       os_security_group:
         state: present
-        name: sg-allow-all
-        description: security group Allow All
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
       environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.securityGroups }}"
+      loop_control:
+        label: "{{ item.name }}"
 
-    - name: Adding ICMP rule Ingress
+    - name: Adding rule Ingress
       os_security_group_rule:
         direction: ingress
-        security_group: sg-allow-all
-        protocol: icmp
-        port_range_min: -1
-        port_range_max: -1
-        remote_ip_prefix: 0.0.0.0/0
+        security_group: "{{ item.0.name }}"
+        protocol: "{{ item.1.protocol }}"
+        port_range_min: "{{ item.1.port_range_min }}"
+        port_range_max: "{{ item.1.port_range_max }}"
+        remote_ip_prefix: "{{ item.1.remote_ip_prefix }}"
       environment: "{{ OpenStackEnvTenant }}"
+      with_subelements:
+        - "{{ openstack.securityGroups }}"
+        - rules
+      loop_control:
+        label: "{{ item.0.name }}"
 
-    - name: Adding TCP/UDP rule Ingress
-      os_security_group_rule:
-        direction: ingress
-        security_group: sg-allow-all
-        protocol: "{{ item }}"
-        port_range_min: 1
-        port_range_max: 65535
-        remote_ip_prefix: 0.0.0.0/0
+    #
+    # - name: Adding TCP/UDP rule Ingress
+    #   os_security_group_rule:
+    #     direction: ingress
+    #     security_group: sg-allow-all
+    #     protocol: "{{ item }}"
+    #     port_range_min: 1
+    #     port_range_max: 65535
+    #     remote_ip_prefix: 0.0.0.0/0
+    #   environment: "{{ OpenStackEnvTenant }}"
+    #   loop:
+    #     - tcp
+    #     - udp
+
+    - name: Create OpenStack Ssh key
+      os_keypair:
+        state: present
+        name: "{{ item.name }}"
+        public_key_file: "{{ item.public_key_file }}"
       environment: "{{ OpenStackEnvTenant }}"
-      loop:
-        - tcp
-        - udp
+      loop: "{{ openstack.key }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Gather facts about a previously created image named image1
       os_image_facts:
@@ -150,10 +174,11 @@
         state: present
         name: "{{ item.name }}"
         image: "{{ openstack_image.id }}"
-        timeout: 30
+        timeout: 60
+        key_name: "{{ openstack.vm.defaultKey }}"
 #        auto_ip: yes
         floating_ip_pools: "{{ openstack.externalNetwork }}"
-        security_groups: sg-allow-all
+        security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
         flavor: "{{ openstack_flavors.0.id }}"
         userdata: "{{ openstack.vm.defaultServerUserData }}"
         nics:
@@ -162,6 +187,7 @@
           hostname: "{{ item.name }}"
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.vm.servers }}"
+      ignore_errors: yes
 
     - name: Gather facts about previously created networks
       os_networks_facts:
@@ -176,7 +202,7 @@
         timeout: 30
 #        auto_ip: yes
         floating_ip_pools: "{{ openstack.externalNetwork }}"
-        security_groups: sg-allow-all
+        security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
         flavor: "{{ openstack_flavors.0.id }}"
         nics:
           - net-id: "{{ openstack_networks.0.id }}"
@@ -184,6 +210,7 @@
           hostname: "{{ item.name }}"
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.vm.clients }}"
+      ignore_errors: yes
 
     - name: Retrieve Floating IP for servers
       os_server_facts:
@@ -196,8 +223,8 @@
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack_servers }}"
       loop_control:
-       label: "{{ item.name }}"
-
+        label: "{{ item.name }}"
+      ignore_errors: yes
 
     - name: Retrieve Floating IP for clients
       os_server_facts:
@@ -210,4 +237,5 @@
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack_servers }}"
       loop_control:
-       label: "{{ item.name }}"
+        label: "{{ item.name }}"
+      ignore_errors: yes

@@ -32,8 +32,14 @@ openstack:
       subnet: subnet-server
       cidr: 3.1.1.0/24
   vm:
-    defaultImage: cirros-0.3.5-x86_64-disk
-    defaultFlavor: cirros256
+    # defaultImage: cirros-0.3.5-x86_64-disk
+    # defaultFlavor: cirros256
+    defaultImage: Ubuntu-Xenial-Server
+    defaultFlavor: ds1G
+    defaultServerUserData: |
+      #!/bin/bash
+      MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
+      while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP" | sudo nc -l -p 80 ; done&
     servers:
       - name: server1
       - name: server2
