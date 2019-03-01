@@ -1,4 +1,12 @@
 # devstack
+## Prerequisites:
+1. Make sure openstacksdk is installed:
+```
+pip install --user openstacksdk
+```
+## Input:
+
+## Use the ansible playbook to
 Goals:
 - Install devstack in a single host
 - Configure OpenStack with networks, subnets, routers for provider project
@@ -10,14 +18,18 @@ Goals:
 - Create VM clients category
 - output a file inventory with server IPs
 
-Use the following command:
-- ansible-playbook -i hostAzurePrivate installDevstack.yml ; ansible-playbook configureDevstack.yml
 
+## Parameters:
 All the variables are stored in var/params.yml
 
-Prerequisites:
+## Run the playbook:
+ansible-playbook -i hostslocalDevstack main.yml
 
-Script has been tested against:
+
+## Tests:
+Playbooks havent been tested against:
 - Ansible 2.7.0
-- Ubuntu 16.04.05 LTS (locally Vmware and in Azure)
-- Openstack Pike (devstack)
+- Ubuntu 16.04.05 LTS (locally and in Azure)
+- Openstack Pike, queens (devstack)
+
+## Improvement:

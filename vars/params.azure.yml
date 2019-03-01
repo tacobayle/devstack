@@ -4,7 +4,7 @@ PackageList:
 
 devstack:
   user: stack
-  version: pike
+  version: queens
   ip: 172.16.1.5
   password: avi123
   net: 11.1.1.0/24
@@ -73,3 +73,8 @@ openstack:
       - name: server2
     clients:
       - name: client1
+
+vmServer:
+  templateFile: server.j2
+  output:
+    - /home/avi/aviVs/vars/server.yml

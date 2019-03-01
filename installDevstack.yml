@@ -10,34 +10,6 @@
 
   tasks:
 
-  - name: Update repositories cache and install the list of packages
-    become: true
-    apt:
-      name: "{{ item }}"
-      update_cache: yes
-    loop: "{{ PackageList }}"
-
-
-  - name: Upgrade all packages to the latest version
-    become: true
-    apt:
-      force_apt_get: True
-      name: "*"
-      state: latest
-
-  - name: Add the user 'stack'
-    become: true
-    user:
-      name: "{{ devstack.user }}"
-      shell: /bin/bash
-      home: /opt/stack
-
-  - name: Update sudoers group
-    become: true
-    lineinfile:
-      dest: /etc/sudoers
-      line: "stack ALL=(ALL) NOPASSWD: ALL"
-
   - name: Download DevStack
     become_user: stack
     become_method: sudo
@@ -47,7 +19,6 @@
       cd ~
       git clone https://git.openstack.org/openstack-dev/devstack -b stable/{{ devstack.version }}
 
-
   - name: Create local.conf file and tranfer it to the Devstack host
     become_user: stack
     become_method: sudo
@@ -55,7 +26,6 @@
     template:
       src: "{{ devstack.templateFile }}"
       dest: /opt/stack/devstack/local.conf
-
 
   - name: Install Devstack
     become_user: stack

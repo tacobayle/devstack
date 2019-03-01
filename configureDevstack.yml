@@ -15,9 +15,9 @@
       OS_IDENTITY_API_VERSION: 3
       OS_PROJECT_DOMAIN_ID: default
       OS_USER_DOMAIN_ID: default
-      OS_PROJECT_NAME: "{{ openstack.projectProvider }}"
+      OS_PROJECT_NAME: "{{ openstack.project.provider }}"
       OS_USERNAME: "{{ openstack.username }}"
-      OS_TENANT_NAME:  "{{ openstack.projectProvider }}"
+      OS_TENANT_NAME:  "{{ openstack.project.provider }}"
 
     OpenStackEnvTenant:
       OS_AUTH_URL: http://{{ devstack.ip }}/identity
@@ -26,9 +26,9 @@
       OS_IDENTITY_API_VERSION: 3
       OS_PROJECT_DOMAIN_ID: default
       OS_USER_DOMAIN_ID: default
-      OS_PROJECT_NAME: "{{ openstack.projectTenant }}"
+      OS_PROJECT_NAME: "{{ openstack.project.tenant }}"
       OS_USERNAME: "{{ openstack.username }}"
-      OS_TENANT_NAME:  "{{ openstack.projectTenant }}"
+      OS_TENANT_NAME:  "{{ openstack.project.tenant }}"
 
   tasks:
 
@@ -36,10 +36,10 @@
       os_network:
         state: present
         name: "{{ item.name }}"
-        external: false
-        shared: false
+        external: "{{ item.external }}"
+        shared: "{{ item.shared }}"
       environment: "{{ OpenStackEnvProvider }}"
-      loop: "{{ openstack.networksProvider }}"
+      loop: "{{ openstack.network.provider }}"
       loop_control:
         label: "{{ item.name }}"
 
@@ -50,20 +50,9 @@
         name: "{{ item.subnet }}"
         cidr: "{{ item.cidr }}"
       environment: "{{ OpenStackEnvProvider }}"
-      loop: "{{ openstack.networksProvider }}"
+      loop: "{{ openstack.network.provider }}"
       loop_control:
         label: "{{ item.name }}"
-
-    - name: Create an OpenStack router for provider project
-      os_router:
-        state: present
-        name: "router-{{ item.name }}"
-        network: public
-        interfaces:
-          - net: "{{ item.name }}"
-            subnet: "{{ item.subnet }}"
-      environment: "{{ OpenStackEnvProvider }}"
-      loop: "{{ openstack.networksProvider }}"
 
     - name: Create OpenStack Networks for Tenant project
       os_network:
@@ -72,7 +61,9 @@
         external: false
         shared: false
       environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack.networksTenant }}"
+      loop: "{{ openstack.network.tenant }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Create OpenStack Subnets for Tenant project
       os_subnet:
@@ -80,19 +71,34 @@
         network_name: "{{ item.name }}"
         name: "{{ item.subnet }}"
         cidr: "{{ item.cidr }}"
+        dns_nameservers: "{{ item.dns_nameservers }}"
       environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack.networksTenant }}"
+      loop: "{{ openstack.network.tenant }}"
+      when: openstack.network.tenant is defined
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create an OpenStack router for provider project
+      os_router:
+        state: present
+        name: "{{ item.name }}"
+        network: "{{ item.network }}"
+        interfaces: "{{ item.interfaces }}"
+      environment: "{{ OpenStackEnvProvider }}"
+      loop: "{{ openstack.router.provider }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Create an OpenStack router for Tenant project
       os_router:
         state: present
-        name: "router-{{ item.name }}"
-        network: public
-        interfaces:
-          - net: "{{ item.name }}"
-            subnet: "{{ item.subnet }}"
+        name: "{{ item.name }}"
+        network: "{{ item.network }}"
+        interfaces: "{{ item.interfaces }}"
       environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack.networksTenant }}"
+      loop: "{{ openstack.router.tenant }}"
+      loop_control:
+        label: "{{ item.name }}"
 
     - name: Uploading a glance image
       os_image:
@@ -131,20 +137,6 @@
       loop_control:
         label: "{{ item.0.name }}"
 
-    #
-    # - name: Adding TCP/UDP rule Ingress
-    #   os_security_group_rule:
-    #     direction: ingress
-    #     security_group: sg-allow-all
-    #     protocol: "{{ item }}"
-    #     port_range_min: 1
-    #     port_range_max: 65535
-    #     remote_ip_prefix: 0.0.0.0/0
-    #   environment: "{{ OpenStackEnvTenant }}"
-    #   loop:
-    #     - tcp
-    #     - udp
-
     - name: Create OpenStack Ssh key
       os_keypair:
         state: present
@@ -155,14 +147,14 @@
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Gather facts about a previously created image named image1
+    - name: Gather facts about a previously created image
       os_image_facts:
         image: "{{ openstack.vm.defaultImage }}"
       environment: "{{ OpenStackEnvTenant }}"
 
     - name: Gather facts about previously created networks
       os_networks_facts:
-        name: "{{ openstack.networksTenant.1.name }}"
+        name: "{{ openstack.vm.network.server }}"
       environment: "{{ OpenStackEnvTenant }}"
 
     - os_flavor_facts:
@@ -176,7 +168,6 @@
         image: "{{ openstack_image.id }}"
         timeout: 60
         key_name: "{{ openstack.vm.defaultKey }}"
-#        auto_ip: yes
         floating_ip_pools: "{{ openstack.externalNetwork }}"
         security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
         flavor: "{{ openstack_flavors.0.id }}"
@@ -191,7 +182,7 @@
 
     - name: Gather facts about previously created networks
       os_networks_facts:
-        name: "{{ openstack.networksTenant.0.name }}"
+        name: "{{ openstack.vm.network.client }}"
       environment: "{{ OpenStackEnvTenant }}"
 
     - name: Create a new instance for client
@@ -200,7 +191,7 @@
         name: "{{ item.name }}"
         image: "{{ openstack_image.id }}"
         timeout: 30
-#        auto_ip: yes
+        key_name: "{{ openstack.vm.defaultKey }}"
         floating_ip_pools: "{{ openstack.externalNetwork }}"
         security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
         flavor: "{{ openstack_flavors.0.id }}"

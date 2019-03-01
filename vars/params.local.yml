@@ -4,14 +4,14 @@ PackageList:
 
 devstack:
   user: stack
-  version: pike
-  ip: 192.168.17.160
+  version: queens
+  ip: 192.168.139.136
   password: avi123
-  net: 192.168.17.0/24
-  gw: 192.168.17.2
+  net: 192.168.139.0/24
+  gw: 192.168.139.2
   if: ens32
-  dhcpStart: 192.168.17.100
-  dhcpEnd: 192.168.17.120
+  dhcpStart: 192.168.139.100
+  dhcpEnd: 192.168.139.120
   privateNet: 10.0.0.0/22
   templateFile: local.conf.j2
 
@@ -27,10 +27,10 @@ openstack:
   networksTenant:
     - name: net-client
       subnet: subnet-client
-      cidr: 2.1.1.0/24
+      cidr: 10.1.7.0/24
     - name: net-server
       subnet: subnet-server
-      cidr: 3.1.1.0/24
+      cidr: 172.16.3.0/24
   glance:
     - name: Ubuntu-Xenial-Server
       fileName: /home/avi/bin/ubuntu/xenial-server-cloudimg-i386-disk1.img
@@ -73,3 +73,8 @@ openstack:
       - name: server2
     clients:
       - name: client1
+
+vmServer:
+  templateFile: server.j2
+  output:
+    - /home/avi/aviVs/vars/server.yml
