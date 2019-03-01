@@ -176,7 +176,7 @@
     - name: Gather facts about previously created flavor
       os_flavor_facts:
         name: "{{ openstack.vm.flavor.server }}"
-       environment: "{{ OpenStackEnvTenant }}"
+      environment: "{{ OpenStackEnvTenant }}"
 
     - name: Create a new instance for servers
       os_server:
