@@ -28,8 +28,7 @@ ansible-playbook -i hostslocalDevstack main.yml
 
 ## Tests:
 Playbooks havent been tested against:
-- Ansible 2.7.0
-- Ubuntu 16.04.05 LTS (locally and in Azure)
+- Ansible 2.7.0, 2.8.0.dev0
 - Openstack Pike, queens (devstack)
 
 ## Improvement:

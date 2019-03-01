@@ -65,7 +65,7 @@
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Create OpenStack Subnets for Tenant project
+    - name: Create OpenStack Subnets for Tenant project (with DNS)
       os_subnet:
         state: present
         network_name: "{{ item.name }}"
@@ -74,7 +74,23 @@
         dns_nameservers: "{{ item.dns_nameservers }}"
       environment: "{{ OpenStackEnvTenant }}"
       loop: "{{ openstack.network.tenant }}"
-      when: openstack.network.tenant is defined
+      when:
+        - openstack.network.tenant is defined
+        - item.dns_nameservers is defined
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create OpenStack Subnets for Tenant project (without DNS)
+      os_subnet:
+        state: present
+        network_name: "{{ item.name }}"
+        name: "{{ item.subnet }}"
+        cidr: "{{ item.cidr }}"
+      environment: "{{ OpenStackEnvTenant }}"
+      loop: "{{ openstack.network.tenant }}"
+      when:
+        - openstack.network.tenant is defined
+        - item.dns_nameservers is not defined
       loop_control:
         label: "{{ item.name }}"
 
@@ -149,7 +165,7 @@
 
     - name: Gather facts about a previously created image
       os_image_facts:
-        image: "{{ openstack.vm.defaultImage }}"
+        image: "{{ openstack.vm.image.server }}"
       environment: "{{ OpenStackEnvTenant }}"
 
     - name: Gather facts about previously created networks
@@ -157,9 +173,10 @@
         name: "{{ openstack.vm.network.server }}"
       environment: "{{ OpenStackEnvTenant }}"
 
-    - os_flavor_facts:
-        name: "{{ openstack.vm.defaultFlavor }}"
-      environment: "{{ OpenStackEnvTenant }}"
+    - name: Gather facts about previously created flavor
+      os_flavor_facts:
+        name: "{{ openstack.vm.flavor.server }}"
+       environment: "{{ OpenStackEnvTenant }}"
 
     - name: Create a new instance for servers
       os_server:
@@ -167,11 +184,11 @@
         name: "{{ item.name }}"
         image: "{{ openstack_image.id }}"
         timeout: 60
-        key_name: "{{ openstack.vm.defaultKey }}"
+        key_name: "{{ openstack.vm.key.server }}"
         floating_ip_pools: "{{ openstack.externalNetwork }}"
-        security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
+        security_groups: "{{ openstack.vm.securitygroup.server }}"
         flavor: "{{ openstack_flavors.0.id }}"
-        userdata: "{{ openstack.vm.defaultServerUserData }}"
+        userdata: "{{ openstack.vm.userdata.server }}"
         nics:
           - net-id: "{{ openstack_networks.0.id }}"
         meta:
@@ -180,9 +197,19 @@
       loop: "{{ openstack.vm.servers }}"
       ignore_errors: yes
 
+    - name: Gather facts about a previously created image
+      os_image_facts:
+        image: "{{ openstack.vm.image.client }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
     - name: Gather facts about previously created networks
       os_networks_facts:
         name: "{{ openstack.vm.network.client }}"
+      environment: "{{ OpenStackEnvTenant }}"
+
+    - name: Gather facts about previously created flavor
+      os_flavor_facts:
+        name: "{{ openstack.vm.flavor.client }}"
       environment: "{{ OpenStackEnvTenant }}"
 
     - name: Create a new instance for client
@@ -191,10 +218,11 @@
         name: "{{ item.name }}"
         image: "{{ openstack_image.id }}"
         timeout: 30
-        key_name: "{{ openstack.vm.defaultKey }}"
+        key_name: "{{ openstack.vm.key.client }}"
         floating_ip_pools: "{{ openstack.externalNetwork }}"
-        security_groups: "{{ openstack.vm.defaultSecurityGroups }}"
+        security_groups: "{{ openstack.vm.securitygroup.client }}"
         flavor: "{{ openstack_flavors.0.id }}"
+        userdata: "{{ openstack.vm.userdata.client }}"
         nics:
           - net-id: "{{ openstack_networks.0.id }}"
         meta:

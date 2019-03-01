@@ -43,11 +43,12 @@ openstack:
         cidr: 10.1.7.0/24
         dns_nameservers:
           - 192.168.2.50
+          - 10.1.7.2
       - name: net-server
         subnet: subnet-server
         cidr: 172.16.3.0/24
-        dns_nameservers:
-          - 172.16.3.1
+        # dns_nameservers:
+        #   - 172.16.3.1
 
   router:
     provider:
@@ -57,15 +58,18 @@ openstack:
           - net: net-avi
             subnet: subnet-avi
     tenant:
-      - name: router-demo
+      - name: router-demo1
         network: public
         interfaces:
           - net: net-client
             subnet: subnet-client
-          - net: net-server
-            subnet: subnet-server
           - net: net-infra
             subnet: subnet-infra
+      - name: router-demo2
+        network: public
+        interfaces:
+          - net: net-server
+            subnet: subnet-server
 
   glance:
     - name: Ubuntu-Xenial-Server
@@ -98,14 +102,35 @@ openstack:
   vm:
     # defaultImage: cirros-0.3.5-x86_64-disk
     # defaultFlavor: cirros256
-    defaultSecurityGroups: sg-allow-all
-    defaultImage: Ubuntu-Xenial-Server
-    defaultFlavor: ds1G
-    defaultKey: keyPairs1
-    defaultServerUserData: |
-      #!/bin/bash
-      MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
-      while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP!" | sudo nc -l -p 80 ; done&
+    # defaultSecurityGroups: sg-allow-all
+    # defaultImage: Ubuntu-Xenial-Server
+    #defaultFlavor: ds1G
+    # defaultKey: keyPairs1
+    # defaultServerUserData: |
+    #   #!/bin/bash
+    #   sudo apt-get install -y apache2-utils
+    #   MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
+    #   while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP!" | sudo nc -l -p 80 ; done&
+    key:
+      client: keyPairs1
+      server: keyPairs1
+    flavor:
+      client: ds1G
+      server: ds1G
+    image:
+      client: Ubuntu-Xenial-Server
+      server: Ubuntu-Xenial-Server
+    securitygroup:
+      client: sg-allow-all
+      server: sg-allow-all
+    userdata:
+      client: |
+        #!/bin/bash
+        sudo apt-get install -y apache2-utils
+      server: |
+        #!/bin/bash
+        MYIP=$(ifconfig ens3|grep 'inet addr'|awk -F: '{print $2}'| awk '{print $1}')
+        while true; do echo -e "HTTP/1.0 200 OK\r\n\r\nWelcome to $MYIP!" | sudo nc -l -p 80 ; done&
     network:
       server: net-server
       client: net-client
