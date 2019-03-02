@@ -3,7 +3,6 @@
   connection: local
   gather_facts: no
 
-
   vars_files:
     - "vars/params.yml"
 
@@ -29,6 +28,9 @@
       OS_PROJECT_NAME: "{{ openstack.project.tenant }}"
       OS_USERNAME: "{{ openstack.username }}"
       OS_TENANT_NAME:  "{{ openstack.project.tenant }}"
+
+    clientIpList: []
+    serverIpList: []
 
   tasks:
 
@@ -236,9 +238,9 @@
         server: server*
       environment: "{{ OpenStackEnvTenant }}"
 
-    - name: Initialize a list for server IPs
-      set_fact:
-        serverIpList: []
+    # - name: Initialize a list for server IPs
+    #   set_fact:
+    #     serverIpList: []
 
     - name: Append Private IPs for each servers on a list
       set_fact:
@@ -265,19 +267,38 @@
       delegate_to: 127.0.0.1
       when: openstack_servers is defined
 
-    - name: Display Floating IP
-      debug:
-        msg: Server "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
-      environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack_servers }}"
-      loop_control:
-        label: "{{ item.name }}"
-      ignore_errors: yes
+    # - name: Display Floating IP
+    #   debug:
+    #     msg: Server "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
+    #   environment: "{{ OpenStackEnvTenant }}"
+    #   loop: "{{ openstack_servers }}"
+    #   loop_control:
+    #     label: "{{ item.name }}"
+    #   ignore_errors: yes
 
     - name: Retrieve Floating IP for Client
       os_server_facts:
         server: client*
       environment: "{{ OpenStackEnvTenant }}"
+
+    # - name: Initialize a list for Client IPs
+    #   set_fact:
+    #     clientIpList: []
+
+    - name: Append Private IPs for each client on a list
+      set_fact:
+        clientIpList: "{{ clientIpList }} + [ '{{ item.public_v4 }}' ]"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create a yaml file with client IP
+      template:
+        src: "{{ vmClient.templateFile }}"
+        dest: "{{ item }}"
+      delegate_to: 127.0.0.1
+      ignore_errors: yes
+      loop: "{{ vmClient.output }}"
 
     - name: Removing previous ssh key for Client
       shell: |
@@ -289,11 +310,11 @@
       delegate_to: 127.0.0.1
       when: openstack_servers is defined
 
-    - name: Display Floating IP for Client
-      debug:
-        msg: Client "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
-      environment: "{{ OpenStackEnvTenant }}"
-      loop: "{{ openstack_servers }}"
-      loop_control:
-        label: "{{ item.name }}"
-      ignore_errors: yes
+    # - name: Display Floating IP for Client
+    #   debug:
+    #     msg: Client "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
+    #   environment: "{{ OpenStackEnvTenant }}"
+    #   loop: "{{ openstack_servers }}"
+    #   loop_control:
+    #     label: "{{ item.name }}"
+    #   ignore_errors: yes

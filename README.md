@@ -32,3 +32,4 @@ Playbooks havent been tested against:
 - Openstack Pike, queens (devstack)
 
 ## Improvement:
+Ansible tags need to be added.

@@ -78,6 +78,7 @@ openstack:
   key:
     - name: keyPairs1
       public_key_file: /home/avi/.ssh/id_rsa.azure.pub
+      private_key_file: /home/avi/.ssh/id_rsa.azure
 
   securityGroups:
     - name: sg-allow-all
@@ -144,3 +145,8 @@ vmServer:
   templateFile: server.j2
   output:
     - ../aviOs/vars/server.yml
+
+vmClient:
+  templateFile: client.j2
+  output:
+    - ../aviOs/vars/client.yml

@@ -1,0 +1,7 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+---
+client:
+  {% for ip in clientIpList %}
+  - ipaddr: {{ ip }}
+    sshKey: {{ openstack.key.0.private_key_file }}
+  {% endfor %}
