@@ -255,6 +255,16 @@
       ignore_errors: yes
       loop: "{{ vmServer.output }}"
 
+    - name: Removing previous ssh key for Server
+      shell: |
+        ssh-keygen -f ~/.ssh/known_hosts -R "{{ item.public_v4 }}"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+        label: "{{ item.name }}"
+      ignore_errors: yes
+      delegate_to: 127.0.0.1
+      when: openstack_servers is defined
+
     - name: Display Floating IP
       debug:
         msg: Server "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
@@ -264,12 +274,22 @@
         label: "{{ item.name }}"
       ignore_errors: yes
 
-    - name: Retrieve Floating IP for clients
+    - name: Retrieve Floating IP for Client
       os_server_facts:
         server: client*
       environment: "{{ OpenStackEnvTenant }}"
 
-    - name: Display Floating IP
+    - name: Removing previous ssh key for Client
+      shell: |
+        ssh-keygen -f ~/.ssh/known_hosts -R "{{ item.public_v4 }}"
+      loop: "{{ openstack_servers }}"
+      loop_control:
+        label: "{{ item.name }}"
+      ignore_errors: yes
+      delegate_to: 127.0.0.1
+      when: openstack_servers is defined
+
+    - name: Display Floating IP for Client
       debug:
         msg: Client "{{ item.name }}" is reachable at "{{ item.public_v4 }}"
       environment: "{{ OpenStackEnvTenant }}"

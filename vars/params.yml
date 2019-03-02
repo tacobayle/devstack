@@ -143,4 +143,4 @@ openstack:
 vmServer:
   templateFile: server.j2
   output:
-    - /home/avi/aviOs/vars/server.yml
+    - ../aviOs/vars/server.yml
